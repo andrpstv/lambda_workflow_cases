@@ -55,11 +55,11 @@ services:
     restart: always
     ports:
       - "8060:8060"
-  cvucl:
-    container_name: cvucl
+  strategy:
+    container_name: strategy
     build:
-      context: ./cvucl
-      dockerfile: cvucl.Dockerfile
+      context: ./strategy
+      dockerfile: strategy.Dockerfile
     restart: always
     ports:
       - "8070:8070"

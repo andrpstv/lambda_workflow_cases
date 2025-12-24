@@ -2,14 +2,13 @@ package srv
 
 import (
 	"encoding/json"
-	"math/rand"
 	"net/http"
 	"strings"
 	"time"
 )
 
 const (
-	SrvName = "Feature Store"
+	SrvName = "Strategy"
 	ex      = "XXXXXXXXXX XXXXXXXXXX XXXXXXXXXX"
 )
 
@@ -31,7 +30,7 @@ func Execute(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(time.Second * time.Duration(req.DelaySec))
 	}
 
-	// 500
+	// 400
 	if req.Fail {
 		makeJSONResponse(w, http.StatusInternalServerError, map[string]string{":error": "fail"})
 		return
@@ -39,12 +38,9 @@ func Execute(w http.ResponseWriter, r *http.Request) {
 
 	// byte size
 	targetSize := req.RespSizeKb * 1024
-	var content string
-	if rand.Intn(100) < 30 {
-		content = ""
-	} else {
-		content = strings.Repeat("x", targetSize/65)
-	}
+
+	// make string
+	content := strings.Repeat("x", targetSize/65)
 
 	resp := &Response{
 		Name: SrvName,

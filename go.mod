@@ -1,6 +1,6 @@
 module lambda_workflow_cases
 
-go 1.24
+go 1.24.5
 
 require go.temporal.io/sdk v1.38.0
 
