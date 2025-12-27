@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"time"
 
+	"go.temporal.io/api/common/v1"
+	"go.temporal.io/api/workflowservice/v1"
 	"go.temporal.io/sdk/client"
 )
 
@@ -25,6 +27,7 @@ func main() {
 		RemoteExecuteParams: map[string]oneworkflow.RemoteRequest{},
 	}
 
+	// ВАЖНО: перед определением задержки проверить на соответствие таймауту на целевом сервере
 	input.RemoteExecuteParams["FeatureStore"] = oneworkflow.RemoteRequest{DelaySec: 1, RespSizeKb: 5}
 	input.RemoteExecuteParams["RiskAvatar"] = oneworkflow.RemoteRequest{DelaySec: 1, RespSizeKb: 5}
 	input.RemoteExecuteParams["RiskParams"] = oneworkflow.RemoteRequest{DelaySec: 1, RespSizeKb: 5}
@@ -32,7 +35,7 @@ func main() {
 	input.RemoteExecuteParams["Model2"] = oneworkflow.RemoteRequest{DelaySec: 1, RespSizeKb: 5}
 	input.RemoteExecuteParams["Model3"] = oneworkflow.RemoteRequest{DelaySec: 1, RespSizeKb: 5}
 	input.RemoteExecuteParams["Model4"] = oneworkflow.RemoteRequest{DelaySec: 1, RespSizeKb: 5}
-	input.RemoteExecuteParams["Strategy"] = oneworkflow.RemoteRequest{DelaySec: 1, RespSizeKb: 5}
+	input.RemoteExecuteParams["Strategy"] = oneworkflow.RemoteRequest{DelaySec: 1, RespSizeKb: 5, Fail: true}
 
 	options := client.StartWorkflowOptions{
 		ID:        "strategy_workflow_" + input.GlobalID,
@@ -48,6 +51,23 @@ func main() {
 	var result oneworkflow.Output
 	err = we.Get(context.Background(), &result)
 	if err != nil {
+		const workflowTaskEventID int64 = 34
+
+		req := &workflowservice.ResetWorkflowExecutionRequest{
+			Namespace: "scenario2",
+			WorkflowExecution: &common.WorkflowExecution{
+				WorkflowId: we.GetID(),
+				RunId:      we.GetRunID(),
+			},
+			WorkflowTaskFinishEventId: workflowTaskEventID,
+			Reason:                    "reset from Go client after failure",
+		}
+
+		_, resetErr := c.ResetWorkflowExecution(context.Background(), req)
+		if resetErr != nil {
+			log.Fatalf("Failed to reset workflow: %v", resetErr)
+		}
+
 		log.Fatalf("Failed to get result: %v", err)
 	}
 
