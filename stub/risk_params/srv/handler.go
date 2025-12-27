@@ -38,10 +38,12 @@ func Execute(w http.ResponseWriter, r *http.Request) {
 
 	// byte size
 	targetSize := req.RespSizeKb * 1024
-
-	// make string
-	content := strings.Repeat("x", targetSize/65)
-
+	var content string
+	if req.IsEmptyResp {
+		content = ""
+	} else {
+		content = strings.Repeat("x", targetSize/65)
+	}
 	resp := &Response{
 		Name: SrvName,
 		Request: Request{

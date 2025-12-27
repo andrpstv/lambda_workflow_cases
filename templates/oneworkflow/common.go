@@ -16,6 +16,7 @@ type RemoteRequest struct {
 	RespSizeKb int  `json:"resp_size_kb"`
 	Fail       bool `json:"fail"`
 	DelaySec   int  `json:"delay_sec"`
+	IsEmptyResp bool `json:"is_empty_resp"`
 }
 type RemoteResponse struct {
 	Name    string `json:"name"`
@@ -39,6 +40,18 @@ type Models struct {
 }
 type Strategy struct {
 	Strategy string
+}
+type Decision string
+
+const (
+	DecisionUnknown  Decision = "UNKNOWN"
+	DecisionApproved Decision = "APPROVED"
+	DecisionRejected Decision = "REJECTED"
+)
+
+type DecisionSignal struct {
+	Decision Decision
+	Reason   string
 }
 
 const (

@@ -2,7 +2,6 @@ package srv
 
 import (
 	"encoding/json"
-	"math/rand"
 	"net/http"
 	"strings"
 	"time"
@@ -40,12 +39,11 @@ func Execute(w http.ResponseWriter, r *http.Request) {
 	// byte size
 	targetSize := req.RespSizeKb * 1024
 	var content string
-	if rand.Intn(100) < 30 {
+	if req.IsEmptyResp {
 		content = ""
 	} else {
 		content = strings.Repeat("x", targetSize/65)
 	}
-
 	resp := &Response{
 		Name: SrvName,
 		Request: Request{
