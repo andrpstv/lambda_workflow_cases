@@ -8,16 +8,16 @@ import (
 	"go.temporal.io/sdk/activity"
 )
 
-func Model3Activity(ctx context.Context, input oneworkflow.Input) (string, error) {
+func Model3Activity(ctx context.Context, ds oneworkflow.DataStore) (string, error) {
 	logger := activity.GetLogger(ctx)
 	logger.Info("Model3Activity started")
 
-	data, ok := input.RemoteExecuteParams["Model3"]
-	if !ok {
-		logger.Error("Activity failed.", "Error", ErrorParams)
-		return "", ErrorParams
-	}
-	byteReq, err := json.Marshal(data)
+	// data, ok := input.RemoteExecuteParams["Model1"]
+	// if !ok {
+	// 	logger.Error("Activity failed.", "Error", ErrorParams)
+	// 	return "", ErrorParams
+	// }
+	byteReq, err := json.Marshal(ds)
 	if err != nil {
 		logger.Error("Activity failed.", "Error", ErrorParams)
 		return "", err
@@ -34,7 +34,7 @@ func Model3Activity(ctx context.Context, input oneworkflow.Input) (string, error
 		logger.Error("Activity failed.", "Error", err)
 		return "", err
 	}
-	logger.Debug("Model3 activity completed.")
+	logger.Debug("Feature Store activity completed.")
 
 	return resp.Content, nil
 }

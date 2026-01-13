@@ -13,9 +13,9 @@ type Input struct {
 	RemoteExecuteParams map[string]RemoteRequest
 }
 type RemoteRequest struct {
-	RespSizeKb int  `json:"resp_size_kb"`
-	Fail       bool `json:"fail"`
-	DelaySec   int  `json:"delay_sec"`
+	RespSizeKb  int  `json:"resp_size_kb"`
+	Fail        bool `json:"fail"`
+	DelaySec    int  `json:"delay_sec"`
 	IsEmptyResp bool `json:"is_empty_resp"`
 }
 type RemoteResponse struct {
@@ -28,9 +28,10 @@ type Output struct {
 	Strategy
 }
 type DataStore struct {
-	FeatureStore string
-	RiskAvatar   string
-	RiskParams   string
+	FeatureStore string `json:"feature_store,omitempty"`
+	RiskAvatar   string `json:"risk_avatar,omitempty"`
+	RiskParams   string `json:"risk_params,omitempty"`
+	Fail         bool   `json:"fail"`
 }
 type Models struct {
 	Model1 string
@@ -55,7 +56,7 @@ type DecisionSignal struct {
 }
 
 const (
-	TaskQueueName   = "scenario1-case1"
+	TaskQueueName   = "scenario6-case1"
 	FeatureStoreURL = "http://localhost:8000/execute"
 	RiskAvatarURL   = "http://localhost:8010/execute"
 	RiskParamsURL   = "http://localhost:8020/execute"
@@ -63,21 +64,21 @@ const (
 	Model2URL       = "http://localhost:8040/execute"
 	Model3URL       = "http://localhost:8050/execute"
 	Model4URL       = "http://localhost:8060/execute"
-	StrategyUrl = "http://localhost:8070/execute"
+	StrategyUrl     = "http://localhost:8070/execute"
 )
 
 func (o *Output) Validate() error {
-    if o.DataStore.FeatureStore == "" {
-        return fmt.Errorf("FeatureStore is empty")
-    }
-    if o.DataStore.RiskAvatar == "" {
-        return fmt.Errorf("RiskAvatar is empty")
-    }
-    if o.DataStore.RiskParams == "" {
-        return fmt.Errorf("RiskParams is empty")
-    }
-    // можно добавить валидацию моделей и стратегии
-    return nil
+	if o.DataStore.FeatureStore == "" {
+		return fmt.Errorf("FeatureStore is empty")
+	}
+	if o.DataStore.RiskAvatar == "" {
+		return fmt.Errorf("RiskAvatar is empty")
+	}
+	if o.DataStore.RiskParams == "" {
+		return fmt.Errorf("RiskParams is empty")
+	}
+	// можно добавить валидацию моделей и стратегии
+	return nil
 }
 
 func CallService(endPoint string, request []byte) ([]byte, error) {

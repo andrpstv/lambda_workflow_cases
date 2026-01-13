@@ -1,11 +1,10 @@
 package workflows
 
 import (
-	"errors"
 	"lambda_workflow_cases/templates/oneworkflow"
-	"lambda_workflow_cases/templates/oneworkflow/scenario2/activities/datastore"
-	"lambda_workflow_cases/templates/oneworkflow/scenario2/activities/models"
-	"lambda_workflow_cases/templates/oneworkflow/scenario2/activities/strategy"
+	"lambda_workflow_cases/templates/oneworkflow/scenario6/activities/datastore"
+	"lambda_workflow_cases/templates/oneworkflow/scenario6/activities/models"
+	"lambda_workflow_cases/templates/oneworkflow/scenario6/activities/strategy"
 	"time"
 
 	"go.temporal.io/sdk/temporal"
@@ -16,122 +15,158 @@ const Name = "UCL scenario1 workflow"
 
 var ValidationStatusKey = temporal.NewSearchAttributeKeyKeyword("ValidationStatus")
 
+var (
+	m1 oneworkflow.Models
+	m2 oneworkflow.Models
+	m3 oneworkflow.Models
+	m4 oneworkflow.Models
+)
+
 func Main(ctx workflow.Context, input *oneworkflow.Input) (*oneworkflow.Output, error) {
 	ao := workflow.ActivityOptions{
-		StartToCloseTimeout: time.Second * 60,
+		StartToCloseTimeout: time.Second * 10,
 		RetryPolicy: &temporal.RetryPolicy{
 			InitialInterval:    1 * time.Second,
 			BackoffCoefficient: 2.0,
 			MaximumAttempts:    3,
 		},
 	}
+
 	ctx = workflow.WithActivityOptions(ctx, ao)
 
-	aoNoRetry := workflow.ActivityOptions{
-		StartToCloseTimeout: time.Second * 15,
-		RetryPolicy: &temporal.RetryPolicy{
-			MaximumAttempts: 1,
-		},
-	}
-	ctxNoRetry := workflow.WithActivityOptions(ctx, aoNoRetry)
-
+	// aoShort := workflow.ActivityOptions{
+	// 	StartToCloseTimeout: time.Second * 5,
+	// 	RetryPolicy: &temporal.RetryPolicy{
+	// 		InitialInterval:    1 * time.Second,
+	// 		BackoffCoefficient: 2.0,
+	// 		MaximumAttempts:    1,
+	// 	},
+	// }
+	// ctxShort := workflow.WithActivityOptions(ctx, aoShort)
 	logger := workflow.GetLogger(ctx)
-	logger.Info(Name + "started")
+	logger.Info(Name + " started")
 
 	result := oneworkflow.Output{}
 
-	futureFS := workflow.ExecuteActivity(ctxNoRetry, datastore.FeatureStoreActivity, input)
 	futureRA := workflow.ExecuteActivity(ctx, datastore.RiskAvatarActivity, input)
 	futureRP := workflow.ExecuteActivity(ctx, datastore.RiskParamsActivity, input)
-	err := futureFS.Get(ctx, &result.DataStore.FeatureStore)
-	if err != nil {
-		var timeoutErr *temporal.TimeoutError
-		if errors.As(err, &timeoutErr) {
-			logger.Error("FeatureStore activity timed out after retries",
-				"TimeoutType", timeoutErr.TimeoutType(),
-				"Error", err)
-		} else {
-			logger.Error("Activity failed", "Error", err)
-			return &result, err
+
+	if err := futureRA.Get(ctx, &result.DataStore.RiskAvatar); err != nil {
+		logger.Error("RiskAvatar activity failed", "Error", err)
+		return &result, err
+	}
+	if err := futureRP.Get(ctx, &result.DataStore.RiskParams); err != nil {
+		logger.Error("RiskParams activity failed", "Error", err)
+		return &result, err
+	}
+	f1, s1 := workflow.NewFuture(ctx)
+	f2, s2 := workflow.NewFuture(ctx)
+	f3, s3 := workflow.NewFuture(ctx)
+	f4, s4 := workflow.NewFuture(ctx)
+
+	workflow.Go(ctx, func(ctx workflow.Context) {
+		var fs oneworkflow.DataStore
+		if err := workflow.ExecuteActivity(ctx, datastore.FeatureStoreActivity, input).
+			Get(ctx, &fs.FeatureStore); err != nil {
+			logger.Error("FeatureStoreActivity for Model1 failed", "Error", err)
+			s1.Set(nil, err)
+			return
 		}
-	}
 
-	err = futureRA.Get(ctx, &result.DataStore.RiskAvatar)
-	if err != nil {
-		logger.Error("Activity failed", "Error", err)
-		return &result, err
-	}
-
-	err = futureRP.Get(ctx, &result.DataStore.RiskParams)
-	if err != nil {
-		logger.Error("Activity failed", "Error", err)
-		return &result, err
-	}
-
-	// err = result.Validate()
-	// if err != nil {
-	// 	logger.Warn("DataStores returned invalid data, skipping validation", "Error", err)
-
-	// 	workflow.SideEffect(ctx, func(ctx workflow.Context) interface{} {
-	// 		return "Валидация не прошла: " + err.Error()
-	// 	})
-
-	// 	// 1. Отображаем предупреждение в блоке Current Details (User Metadata) в UI
-	// 	// Это сообщение будет наглядно видно на странице деталей воркфлоу
-	// 	workflow.SetCurrentDetails(ctx, "Предупреждение: Валидация агрегата не прошла: "+err.Error())
-
-	// 	// 2. Обновляем статус в типизированных атрибутах поиска для видимости в общем списке
-	// 	errUpsert := workflow.UpsertTypedSearchAttributes(ctx,
-	// 		ValidationStatusKey.ValueSet("Warning"),
-	// 	)
-	// 	if errUpsert != nil {
-	// 		logger.Error("Failed to upsert search attributes", "Error", errUpsert)
-	// 	}
-	// }
-
-	futureM1 := workflow.ExecuteActivity(ctx, models.Model1Activity, input)
-	futureM2 := workflow.ExecuteActivity(ctx, models.Model2Activity, input)
-	futureM3 := workflow.ExecuteActivity(ctx, models.Model3Activity, input)
-	futureM4 := workflow.ExecuteActivity(ctx, models.Model4Activity, input)
-
-	err = futureM1.Get(ctx, &result.Models.Model1)
-	if err != nil {
-		var activityErr *temporal.ActivityError
-		if errors.As(err, &activityErr) {
-			logger.Error("Model1 activity failed",
-				"ActivityID", activityErr.ActivityID(),
-				"RetryState", activityErr.RetryState().String(), // покажет причину (в этом случае MaximumAttemptsReached)
-				"Error", err)
-
-		} else {
-			logger.Error("Critical workflow error", "Error", err)
-			return &result, err
+		var r oneworkflow.Models
+		if err := workflow.ExecuteActivity(ctx, models.Model1Activity, fs).
+			Get(ctx, &r.Model1); err != nil {
+			logger.Error("Model1Activity failed", "Error", err)
+			s1.Set(nil, err)
+			return
 		}
-	}
-	err = futureM2.Get(ctx, &result.Models.Model2)
-	if err != nil {
-		logger.Error("Activity failed", "Error", err)
+
+		s1.Set(r.Model1, nil)
+	})
+
+	workflow.Go(ctx, func(ctx workflow.Context) {
+		var fs oneworkflow.DataStore
+		if err := workflow.ExecuteActivity(ctx, datastore.FeatureStoreActivity, input).
+			Get(ctx, &fs.FeatureStore); err != nil {
+			logger.Error("FeatureStoreActivity for Model2 failed", "Error", err)
+			s2.Set(nil, err)
+			return
+		}
+
+		var r oneworkflow.Models
+		if err := workflow.ExecuteActivity(ctx, models.Model2Activity, fs).
+			Get(ctx, &r.Model2); err != nil {
+			logger.Error("Model2Activity failed", "Error", err)
+			s2.Set(nil, err)
+			return
+		}
+
+		s2.Set(r.Model2, nil)
+	})
+
+	workflow.Go(ctx, func(ctx workflow.Context) {
+		var fs oneworkflow.DataStore
+		if err := workflow.ExecuteActivity(ctx, datastore.FeatureStoreActivity, input).
+			Get(ctx, &fs.FeatureStore); err != nil {
+			logger.Error("FeatureStoreActivity for Model3 failed", "Error", err)
+			s3.Set(nil, err)
+			return
+		}
+
+		var r oneworkflow.Models
+		if err := workflow.ExecuteActivity(ctx, models.Model3Activity, fs).
+			Get(ctx, &r.Model3); err != nil {
+			logger.Error("Model3Activity failed", "Error", err)
+			s3.Set(nil, err)
+			return
+		}
+
+		s3.Set(r.Model3, nil)
+	})
+
+	workflow.Go(ctx, func(ctx workflow.Context) {
+		var fs oneworkflow.DataStore
+		if err := workflow.ExecuteActivity(ctx, datastore.FeatureStoreActivity, input).
+			Get(ctx, &fs.FeatureStore); err != nil {
+			logger.Error("FeatureStoreActivity for Model4 failed", "Error", err)
+			s4.Set(nil, err)
+			return
+		}
+
+		var r oneworkflow.Models
+		if err := workflow.ExecuteActivity(ctx, models.Model4Activity, fs).
+			Get(ctx, &r.Model4); err != nil {
+			logger.Error("Model4Activity failed", "Error", err)
+			s4.Set(nil, err)
+			return
+		}
+
+		s4.Set(r.Model4, nil)
+	})
+
+	if err := f1.Get(ctx, &m1.Model1); err != nil {
 		return &result, err
 	}
-	err = futureM3.Get(ctx, &result.Models.Model3)
-	if err != nil {
-		logger.Error("Activity failed", "Error", err)
+	if err := f2.Get(ctx, &m2.Model2); err != nil {
 		return &result, err
 	}
-	err = futureM4.Get(ctx, &result.Models.Model4)
-	if err != nil {
-		logger.Error("Activity failed", "Error", err)
+	if err := f3.Get(ctx, &m3.Model3); err != nil {
 		return &result, err
 	}
+	if err := f4.Get(ctx, &m4.Model4); err != nil {
+		return &result, err
+	}
+	result.Models.Model1 = m1.Model1
+	result.Models.Model2 = m2.Model2
+	result.Models.Model3 = m3.Model3
+	result.Models.Model4 = m4.Model4
 
 	futureStrategy := workflow.ExecuteActivity(ctx, strategy.StrategyActivity, input)
-
-	err = futureStrategy.Get(ctx, &result.Strategy.Strategy)
-	if err != nil {
-		logger.Error("Activity failed", "Error", err)
+	if err := futureStrategy.Get(ctx, &result.Strategy.Strategy); err != nil {
+		logger.Error("StrategyActivity failed", "Error", err)
 		return &result, err
 	}
-	logger.Info(Name + "finished")
 
+	logger.Info(Name + " finished")
 	return &result, nil
 }

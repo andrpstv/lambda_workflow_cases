@@ -1,0 +1,65 @@
+services:
+  feature_store:
+    container_name: feature_store
+    build:
+      context: ./feature_store
+      dockerfile: feature_store.Dockerfile
+    restart: always
+    ports:
+      - "8000:8000"
+  risk_avatar:
+    container_name: risk_avatar
+    build:
+      context: ./risk_avatar
+      dockerfile: risk_avatar.Dockerfile
+    restart: always
+    ports:
+      - "8010:8010"
+  risk_params:
+    container_name: risk_params
+    build:
+      context: ./risk_params
+      dockerfile: risk_params.Dockerfile
+    restart: always
+    ports:
+      - "8020:8020"
+  model_1:
+    container_name: model_1
+    build:
+      context: ./model_1
+      dockerfile: model_1.Dockerfile
+    restart: always
+    ports:
+      - "8030:8030"
+  model_2:
+    container_name: model_2
+    build:
+      context: ./model_2
+      dockerfile: model_2.Dockerfile
+    restart: always
+    ports:
+      - "8040:8040"
+  model_3:
+    container_name: model_3
+    build:
+      context: ./model_3
+      dockerfile: model_3.Dockerfile
+    restart: always
+    ports:
+      - "8050:8050"
+  model_4:
+    container_name: model_4
+    build:
+      context: ./model_4
+      dockerfile: model_4.Dockerfile
+    restart: always
+    ports:
+      - "8060:8060"
+  strategy:
+    container_name: strategy
+    build:
+      context: ./strategy
+      dockerfile: strategy.Dockerfile
+    restart: always
+    ports:
+      - "8070:8070"

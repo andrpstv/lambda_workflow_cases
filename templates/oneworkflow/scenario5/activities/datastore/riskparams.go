@@ -1,4 +1,4 @@
-package models
+package datastore
 
 import (
 	"context"
@@ -8,22 +8,22 @@ import (
 	"go.temporal.io/sdk/activity"
 )
 
-func Model4Activity(ctx context.Context, ds oneworkflow.DataStore) (string, error) {
+func RiskParamsActivity(ctx context.Context, input oneworkflow.Input) (string, error) {
 	logger := activity.GetLogger(ctx)
-	logger.Info("Model4Activity started")
+	logger.Info("RiskParamsActivity started")
 
-	// data, ok := input.RemoteExecuteParams["Model1"]
-	// if !ok {
-	// 	logger.Error("Activity failed.", "Error", ErrorParams)
-	// 	return "", ErrorParams
-	// }
-	byteReq, err := json.Marshal(ds)
+	data, ok := input.RemoteExecuteParams["RiskParams"]
+	if !ok {
+		logger.Error("Activity failed.", "Error", ErrorParams)
+		return "", ErrorParams
+	}
+	byteReq, err := json.Marshal(data)
 	if err != nil {
 		logger.Error("Activity failed.", "Error", ErrorParams)
 		return "", err
 	}
 
-	byteResp, err := oneworkflow.CallService(oneworkflow.Model4URL, byteReq)
+	byteResp, err := oneworkflow.CallService(oneworkflow.RiskParamsURL, byteReq)
 	if err != nil {
 		logger.Error("Activity failed.", "Error", err)
 		return "", err
@@ -34,7 +34,7 @@ func Model4Activity(ctx context.Context, ds oneworkflow.DataStore) (string, erro
 		logger.Error("Activity failed.", "Error", err)
 		return "", err
 	}
-	logger.Debug("Feature Store activity completed.")
+	logger.Debug("Risk Params activity completed.")
 
 	return resp.Content, nil
 }

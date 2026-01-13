@@ -2,10 +2,10 @@ package main
 
 import (
 	"lambda_workflow_cases/templates/oneworkflow"
-	"lambda_workflow_cases/templates/oneworkflow/scenario6/activities/datastore"
-	"lambda_workflow_cases/templates/oneworkflow/scenario6/activities/models"
-	"lambda_workflow_cases/templates/oneworkflow/scenario6/activities/strategy"
-	"lambda_workflow_cases/templates/oneworkflow/scenario6/workflows"
+	"lambda_workflow_cases/templates/oneworkflow/scenario2/activities/datastore"
+	"lambda_workflow_cases/templates/oneworkflow/scenario2/activities/models"
+	"lambda_workflow_cases/templates/oneworkflow/scenario2/activities/strategy"
+	"lambda_workflow_cases/templates/oneworkflow/scenario2/workflows"
 	"log"
 
 	"go.temporal.io/sdk/activity"
@@ -20,7 +20,7 @@ var (
 )
 
 func main() {
-	c, err := client.Dial(client.Options{Namespace: "scenario6"})
+	c, err := client.Dial(client.Options{Namespace: "scenario2"})
 	if err != nil {
 		log.Fatalln("Unable to connect to temporal client", err)
 	}

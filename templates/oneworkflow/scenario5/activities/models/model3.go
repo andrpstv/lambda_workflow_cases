@@ -3,31 +3,27 @@ package models
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"lambda_workflow_cases/templates/oneworkflow"
 
 	"go.temporal.io/sdk/activity"
 )
 
-var ErrorParams = errors.New("params not found")
-
-func Model1Activity(ctx context.Context, ds oneworkflow.DataStore) (string, error) {
+func Model3Activity(ctx context.Context, input oneworkflow.Input) (string, error) {
 	logger := activity.GetLogger(ctx)
-	logger.Info("Model1Activity started")
+	logger.Info("Model3Activity started")
 
-	ds.Fail = true
-	// data, ok := input.RemoteExecuteParams["Model1"]
-	// if !ok {
-	// 	logger.Error("Activity failed.", "Error", ErrorParams)
-	// 	return "", ErrorParams
-	// }
-	byteReq, err := json.Marshal(ds)
+	data, ok := input.RemoteExecuteParams["Model3"]
+	if !ok {
+		logger.Error("Activity failed.", "Error", ErrorParams)
+		return "", ErrorParams
+	}
+	byteReq, err := json.Marshal(data)
 	if err != nil {
 		logger.Error("Activity failed.", "Error", ErrorParams)
 		return "", err
 	}
 
-	byteResp, err := oneworkflow.CallService(oneworkflow.Model1URL, byteReq)
+	byteResp, err := oneworkflow.CallService(oneworkflow.Model3URL, byteReq)
 	if err != nil {
 		logger.Error("Activity failed.", "Error", err)
 		return "", err
@@ -38,7 +34,7 @@ func Model1Activity(ctx context.Context, ds oneworkflow.DataStore) (string, erro
 		logger.Error("Activity failed.", "Error", err)
 		return "", err
 	}
-	logger.Debug("Feature Store activity completed.")
+	logger.Debug("Model3 activity completed.")
 
 	return resp.Content, nil
 }

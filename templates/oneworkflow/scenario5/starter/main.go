@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"lambda_workflow_cases/templates/oneworkflow"
-	"lambda_workflow_cases/templates/oneworkflow/scenario6/workflows"
+	"lambda_workflow_cases/templates/oneworkflow/scenario2/workflows"
 	"log"
 	"math/rand"
 	"strconv"
@@ -28,10 +28,14 @@ func main() {
 	}
 
 	// ВАЖНО: перед определением задержки проверить на соответствие таймауту на целевом сервере
-	input.RemoteExecuteParams["FeatureStore"] = oneworkflow.RemoteRequest{DelaySec: 7, RespSizeKb: 5}
+	input.RemoteExecuteParams["FeatureStore"] = oneworkflow.RemoteRequest{DelaySec: 1, RespSizeKb: 5}
 	input.RemoteExecuteParams["RiskAvatar"] = oneworkflow.RemoteRequest{DelaySec: 1, RespSizeKb: 5}
 	input.RemoteExecuteParams["RiskParams"] = oneworkflow.RemoteRequest{DelaySec: 1, RespSizeKb: 5}
-	input.RemoteExecuteParams["Strategy"] = oneworkflow.RemoteRequest{DelaySec: 1, RespSizeKb: 5}
+	input.RemoteExecuteParams["Model1"] = oneworkflow.RemoteRequest{DelaySec: 1, RespSizeKb: 5}
+	input.RemoteExecuteParams["Model2"] = oneworkflow.RemoteRequest{DelaySec: 1, RespSizeKb: 5}
+	input.RemoteExecuteParams["Model3"] = oneworkflow.RemoteRequest{DelaySec: 1, RespSizeKb: 5}
+	input.RemoteExecuteParams["Model4"] = oneworkflow.RemoteRequest{DelaySec: 1, RespSizeKb: 5}
+	input.RemoteExecuteParams["Strategy"] = oneworkflow.RemoteRequest{DelaySec: 1, RespSizeKb: 5, Fail: true}
 
 	options := client.StartWorkflowOptions{
 		ID:        "strategy_workflow_" + input.GlobalID,
@@ -50,7 +54,7 @@ func main() {
 		const workflowTaskEventID int64 = 34
 
 		req := &workflowservice.ResetWorkflowExecutionRequest{
-			Namespace: "scenario6",
+			Namespace: "scenario2",
 			WorkflowExecution: &common.WorkflowExecution{
 				WorkflowId: we.GetID(),
 				RunId:      we.GetRunID(),
